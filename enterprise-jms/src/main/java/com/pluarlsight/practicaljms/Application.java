@@ -132,14 +132,6 @@ public class Application {
         messageProducer.send(msg); //Per message
     }
 
-    public void sendTextMessageToTopic(String message,
-                                       TopicSession session) throws JMSException {
-        Topic topic = session.createTopic("TEST_TOPIC_SESSION");
-        TextMessage msg = session.createTextMessage(message);
-        TopicPublisher messagePublisher = session.createPublisher(topic);
-        messagePublisher.send(msg); //Per message
-    }
-
 //    public void sendTextMessageToTopic(String message,
 //                                       Session session) throws JMSException {
 //        Topic queue = session.createTopic("TEST_TOPIC");
@@ -177,9 +169,9 @@ public class Application {
 
     public static void main(String... args) throws Exception {
         Application app = new Application();
-        TopicConnectionFactory cf = app.createTopicConnectionFactory();
-        TopicConnection conn = app.createTopicConnection(cf);
-        TopicSession session = app.createTopicSession(conn);
+        ConnectionFactory cf = app.createConnectionFactory();
+        Connection conn = app.createConnection(cf);
+        Session session = app.createSession(conn);
         app.sendTextMessageToTopic("Topic Message", session);
         session.close();
         conn.close();
