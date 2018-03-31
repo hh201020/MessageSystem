@@ -162,10 +162,10 @@ public class Application {
 
     public static void main(String... args) throws Exception {
         Application app = new Application();
-        ConnectionFactory cf = app.createConnectionFactory();
-        Connection conn = app.createConnection(cf);
-        Session session = app.createSession(conn);
-        app.sendTextMessageToQueue("Test Message", session);
+        QueueConnectionFactory cf = app.createQueueConnectionFactory();
+        QueueConnection conn = app.createQueueConnection(cf);
+        QueueSession session = app.createQueueSession(conn);
+        app.sendTextMessageToQueue("Another Message", session);
         session.close();
         conn.close();
 
