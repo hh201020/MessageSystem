@@ -129,21 +129,14 @@ public class Application {
         Topic queue = session.createTopic("TEST_TOPIC");
         TextMessage msg = session.createTextMessage(message);
         MessageProducer messageProducer = session.createProducer(queue);
-        messageProducer.send(msg); //Per message
+        messageProducer.setPriority(9); //0-9, 9 highest, all messages, 4 default
+        messageProducer.setTimeToLive(10000); //milliseconds, 0 default - doesn't expire
+        messageProducer.send(msg,
+                DeliveryMode.NON_PERSISTENT,
+                9, // Per message
+                20000); //Per message
     }
 
-//    public void sendTextMessageToTopic(String message,
-//                                       Session session) throws JMSException {
-//        Topic queue = session.createTopic("TEST_TOPIC");
-//        TextMessage msg = session.createTextMessage(message);
-//        MessageProducer messageProducer = session.createProducer(queue);
-//        messageProducer.setPriority(9); //0-9, 9 highest, all messages, 4 default
-//        messageProducer.setTimeToLive(10000); //milliseconds, 0 default - doesn't expire
-//        messageProducer.send(msg,
-//                DeliveryMode.NON_PERSISTENT,
-//                9, // Per message
-//                20000); //Per message
-//    }
 
     public MessageConsumer consumeFromQueue(Session session,
                                             String destination,
@@ -171,10 +164,44 @@ public class Application {
         Application app = new Application();
         ConnectionFactory cf = app.createConnectionFactory();
         Connection conn = app.createConnection(cf);
+        conn.setClientID("MyUniqueClientId02");
         Session session = app.createSession(conn);
-        app.sendTextMessageToTopic("Topic Message", session);
-        session.close();
-        conn.close();
+        TopicSubscriber topicSubscriber =
+                app.consumeFromTopic(session,
+                        "TEST_TOPIC",
+                        (message -> {
+                            if (message instanceof TextMessage) {
+                                TextMessage txtMsg = (TextMessage)message;
+                                try {
+                                    System.out.println(txtMsg.getText());
+                                } catch (JMSException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }));
+        conn.start();
+
+        //Free resources
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                try {
+                    super.run();
+                    conn.stop();
+                    topicSubscriber.close();
+                    session.close();
+                    conn.close();
+
+                    //If you are finished with the subscription
+                    session.unsubscribe("test-subscription");
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        while (true) {
+            app.sendTextMessageToTopic("Test Message", session);
+        }
 
     }
 
