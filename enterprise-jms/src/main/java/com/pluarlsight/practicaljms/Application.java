@@ -165,43 +165,9 @@ public class Application {
         ConnectionFactory cf = app.createConnectionFactory();
         Connection conn = app.createConnection(cf);
         Session session = app.createSession(conn);
-        conn.setClientID("MyUniqueClientId01");
-        TopicSubscriber topicSubscriber =
-                app.consumeFromTopic(session,
-                        "TEST_TOPIC",
-                        (message -> {
-                            if (message instanceof TextMessage) {
-                                TextMessage txtMsg = (TextMessage)message;
-                                try {
-                                    System.out.println(txtMsg.getText());
-                                } catch (JMSException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }));
-        conn.start();
-
-        //Free resources
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                try {
-                    super.run();
-                    conn.stop();
-                    topicSubscriber.close();
-                    session.close();
-                    conn.close();
-
-                    //If you are finished with the subscription
-                    session.unsubscribe("test-subscription");
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-        while (true) {
-            app.sendTextMessageToTopic("Test Message", session);
-        }
+        app.sendTextMessageToQueue("Test Message", session);
+        session.close();
+        conn.close();
 
     }
 
